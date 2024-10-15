@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15
+// Version: 24.10.15 I
 // End License
 #include <Slyvina.hpp>
 
@@ -30,11 +30,21 @@
 #include <map>
 #include <SlyvString.hpp>
 #include <SlyvQCol.hpp>
+#include <SlyvSilly.hpp>
 
 using namespace Slyvina::Units;
 
 namespace Slyvina {
 	namespace Azor {
+
+#pragma region "Base Commands"
+		static void cmd_cls(std::vector<String>) { cls(); }
+		static void cmd_fuck(std::vector<String>) { QCol->LMagenta("What kind of talk is that?\n"); }
+		static void cmd_paratest(carg a) {
+			QCol->Reset();
+			for (size_t i = 0; i < a.size(); i++) printf("%9d - %s\n", (int)i + 1, a[i].c_str());
+		}
+#pragma endregion
 
 		static std::map<String, Azor_Command> _Reg{};
 
@@ -44,6 +54,21 @@ namespace Slyvina {
 				QCol->Error("Dupe command register: " + CS);
 			else
 				_Reg[CS] = AC;
+		}
+
+		void BaseCommands() {
+			RegCommand("cls", cmd_cls);
+			RegCommand("fuck", cmd_fuck);
+			RegCommand("shit", cmd_fuck);
+			RegCommand("Paratest", cmd_paratest);
+		}
+		void Execute(std::string cmd, std::vector<std::string> args) {
+			cmd = Trim(cmd);
+			Trans2Upper(cmd);
+			if (!cmd.size()) return;
+			if (!_Reg.count(cmd)) { QCol->Error("Command " + cmd + " not understood!"); return; };
+			if (!_Reg[cmd]) { QCol->Error("Command " + cmd + " is a null pointer! This is a bug in Azor! Please report!"); return; }
+			_Reg[cmd](args);
 		}
 	}
 }

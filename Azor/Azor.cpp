@@ -22,11 +22,19 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15 I
+// Version: 24.10.15 II
 // End License
 
 #include <SlyvQCol.hpp>
+#include <SlyvConInput.hpp>
 #include "Azor_Config.hpp"
+#include <SlyvString.hpp>
+#include "Azor_CommandRegister.hpp"
+
+#undef PARADEBUG
+
+using namespace Slyvina;
+using namespace Slyvina::Units;
 using namespace Slyvina::Azor;
 
 int main(int cargs, char** args) {
@@ -34,4 +42,63 @@ int main(int cargs, char** args) {
 	QCol->Doing("Coded by", "Jeroen P. Broks");
 	QCol->Doing("License", "General Public License 3");
 	QCol->Doing("Config", ConfigCreation());
+	BaseCommands();
+	do {
+		QCol->Yellow(Prompt());
+		QCol->Cyan("");
+		String fcmd{ Trim(ReadLine()) }, cmd{ "" };
+		std::vector<String> Para{};
+		auto fparaf{ IndexOf(fcmd,' ') };
+		if (fparaf <= 0) cmd = Upper(fcmd);
+		else {
+			cmd = Upper(fcmd.substr(0, fparaf));
+			Para.clear();
+			Para.push_back("");
+			auto escape{ false }, instring{ false };
+			for (auto p = fparaf; p < fcmd.size(); p++) {
+				auto& CP{ Para[Para.size() - 1] };
+				auto ch{ fcmd[p] };
+					if (escape) {
+						switch (ch) {
+						case 'n': CP += "\n"; break;
+						case 'r': CP += "\r"; break;
+						case 'b': CP += "\b"; break;
+						case 't': CP += "\t"; break;
+						default:
+							CP += ch;
+						}
+						escape = false;
+					} else {
+#ifdef PARADEBUG
+						QCol->Doing("Param", Para.size());
+						QCol->Doing("-->", CP+"/"+ch);
+#endif
+						switch (ch) {
+						case ' ':
+						case '\t':
+							if (instring) CP += ch;
+							else if (CP.size()) {
+								Para.push_back("");
+								continue;
+							}
+							break;
+						case '"':
+							instring = !instring;
+							break;
+						case '\\':
+							escape = true;
+							break;
+						default:
+							CP += ch;
+							break;
+						}
+					}
+				}
+			}		
+		if (cmd == "BYE") {
+			QCol->Doing("Quitting", "Azor");
+			QCol->Reset();
+			return 0;
+		} else Execute(cmd, Para);
+	} while (true);
 }

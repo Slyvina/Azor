@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15
+// Version: 24.10.15 II
 // End License
 
 #include <SlyvGINIE.hpp>
@@ -30,6 +30,7 @@
 #include <SlyvDirry.hpp>
 #include <SlyvQCol.hpp>
 #include "Azor_Config.hpp"
+#include <SlyvAsk.hpp>
 
 using namespace Slyvina::Units;
 
@@ -38,6 +39,7 @@ using namespace Slyvina::Units;
 namespace Slyvina {
 	namespace Azor {
 		static GINIE MainConfig{ nullptr };
+		static String _Using{ "" };
 
 		String Slyvina::Azor::ConfigCreation() {
 			if (!MainConfig) {
@@ -49,8 +51,20 @@ namespace Slyvina {
 				}
 				MainConfig = LoadGINIE(AzorConfigFile, AzorConfigFile, "Azor global config file.\n(c) Jeroen P. Broks");
 			}
-			return MainConfig->NewValue("Azor","Creation",CurrentDate()+"; "+CurrentTime());
+			return MainConfig->NewValue("Azor", "Creation", CurrentDate() + "; " + CurrentTime());
 		}
 
+		String ProjectPath() {
+			return Ask(MainConfig, "Project", "Directory", "Full Directory of where the projects should be stored: ");
+		}
+
+		String Using() {
+			return _Using;
+		}
+
+		String Prompt() {
+			if (!_Using.size()) return "? No Project ? >";
+			return _Using + ">";
+		}
 	}
 }

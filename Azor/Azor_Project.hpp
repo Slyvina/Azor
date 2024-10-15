@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15
+// Version: 24.10.15 I
 // End License
 
 #pragma once
@@ -37,6 +37,7 @@ namespace Slyvina {
 		private:
 			String pname{ "" };
 		public:
+			String Name();
 		};
 
 	}
