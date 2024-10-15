@@ -5,6 +5,7 @@
 *.exe
 *.pdb
 *.obj
+Azor/Azor/x64
 
 # Compiled Linux Stuff
 Linux/Exe
