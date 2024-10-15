@@ -132,6 +132,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Azor_CommandRegister.hpp" />
+    <ClInclude Include="Azor_Config.hpp" />
+    <ClInclude Include="Azor_Project.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Libs\Units\Source\SlyvAsk.cpp" />
@@ -148,6 +150,8 @@
     <ClCompile Include="..\..\..\Libs\Units\Source\SlyvVolumes.cpp" />
     <ClCompile Include="Azor.cpp" />
     <ClCompile Include="Azor_CommandRegister.cpp" />
+    <ClCompile Include="Azor_Config.cpp" />
+    <ClCompile Include="Azor_Project.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

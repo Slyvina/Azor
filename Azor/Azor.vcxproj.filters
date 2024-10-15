@@ -21,6 +21,12 @@
     <ClInclude Include="Azor_CommandRegister.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Azor_Project.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Azor_Config.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Azor_CommandRegister.cpp">
@@ -63,6 +69,12 @@
       <Filter>Source Files\Units</Filter>
     </ClCompile>
     <ClCompile Include="Azor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Azor_Project.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Azor_Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

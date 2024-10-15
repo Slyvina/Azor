@@ -22,12 +22,16 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15
+// Version: 24.10.15 I
 // End License
+
 #include <SlyvQCol.hpp>
+#include "Azor_Config.hpp"
+using namespace Slyvina::Azor;
 
 int main(int cargs, char** args) {
 	QCol->LMagenta("Azor\n\n");
 	QCol->Doing("Coded by", "Jeroen P. Broks");
 	QCol->Doing("License", "General Public License 3");
+	QCol->Doing("Config", ConfigCreation());
 }
