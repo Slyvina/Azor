@@ -1,0 +1,16 @@
+# Visual Studio
+.vs
+
+# Compiled Windows Stuff
+*.exe
+*.pdb
+*.obj
+
+# Compiled Linux Stuff
+Linux/Exe
+*.o
+*.a
+
+# Syldeyn
+MKL_*
+
