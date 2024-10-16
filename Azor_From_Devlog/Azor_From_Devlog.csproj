@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\Ask.cs" Link="Uints\Ask.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\BlitzBank.cs" Link="Uints\BlitzBank.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\Dirry.cs" Link="Uints\Dirry.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\FileList.cs" Link="Uints\FileList.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\Fmt.cs" Link="Uints\Fmt.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\GINI Is Not Ini.cs" Link="Uints\GINI Is Not Ini.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\GINIE.cs" Link="Uints\GINIE.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\Maps.cs" Link="Uints\Maps.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\mkl.cs" Link="Uints\mkl.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\qstr.cs" Link="Uints\qstr.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\qstream.cs" Link="Uints\qstream.cs" />
+    <Compile Include="..\..\..\..\VisualStudio\TrickyUnits\QuickConsoleColors.cs" Link="Uints\QuickConsoleColors.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Uints\" />
+  </ItemGroup>
+
+</Project>
