@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15 II
+// Version: 24.10.16
 // End License
 
 #include <SlyvGINIE.hpp>
@@ -39,7 +39,6 @@ using namespace Slyvina::Units;
 namespace Slyvina {
 	namespace Azor {
 		static GINIE MainConfig{ nullptr };
-		static String _Using{ "" };
 
 		String Slyvina::Azor::ConfigCreation() {
 			if (!MainConfig) {
@@ -58,13 +57,5 @@ namespace Slyvina {
 			return Ask(MainConfig, "Project", "Directory", "Full Directory of where the projects should be stored: ");
 		}
 
-		String Using() {
-			return _Using;
-		}
-
-		String Prompt() {
-			if (!_Using.size()) return "? No Project ? >";
-			return _Using + ">";
-		}
 	}
 }

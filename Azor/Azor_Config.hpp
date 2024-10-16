@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15 II
+// Version: 24.10.16
 // End License
 
 #pragma once
@@ -33,8 +33,6 @@ namespace Slyvina {
 	namespace Azor {
 		String ConfigCreation();
 		String ProjectPath();
-		String Using();
-		String Prompt();
 	}
 
 }

@@ -22,14 +22,16 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15 I
+// Version: 24.10.16
 // End License
 #include <Slyvina.hpp>
 
 #include "Azor_CommandRegister.hpp"
+#include "Azor_Config.hpp"
 #include <map>
 #include <SlyvString.hpp>
 #include <SlyvQCol.hpp>
+#include <SlyvDir.hpp>
 #include <SlyvSilly.hpp>
 
 using namespace Slyvina::Units;
@@ -43,6 +45,23 @@ namespace Slyvina {
 		static void cmd_paratest(carg a) {
 			QCol->Reset();
 			for (size_t i = 0; i < a.size(); i++) printf("%9d - %s\n", (int)i + 1, a[i].c_str());
+		}
+		static void cmd_dir(carg) {
+			auto d{ FileList(ProjectPath()) };
+			auto l{ NewStringMap() };
+			for (auto fa : *d) {
+				auto
+					a{ StripExt(fa) },
+					e{ Upper(ExtractExt(fa)) };
+				if (e == "PRJ" && (*l)[a] == "") (*l)[a] = "Devlog";
+				else if (e == "AZOR") (*l)[a] = "  Azor";
+			}
+			auto cnt{ 0 };
+			for (auto f : *l) {
+				QCol->LCyan(TrSPrintF("%9d: ", ++cnt));
+				QCol->LGreen(f.second+": ");
+				QCol->LMagenta(f.first + "\n");
+			}
 		}
 #pragma endregion
 
@@ -61,6 +80,7 @@ namespace Slyvina {
 			RegCommand("fuck", cmd_fuck);
 			RegCommand("shit", cmd_fuck);
 			RegCommand("Paratest", cmd_paratest);
+			RegCommand("dir", cmd_dir);
 		}
 		void Execute(std::string cmd, std::vector<std::string> args) {
 			cmd = Trim(cmd);

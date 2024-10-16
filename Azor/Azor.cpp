@@ -30,6 +30,7 @@
 #include "Azor_Config.hpp"
 #include <SlyvString.hpp>
 #include "Azor_CommandRegister.hpp"
+#include "Azor_Project.hpp"
 
 #undef PARADEBUG
 
@@ -43,6 +44,7 @@ int main(int cargs, char** args) {
 	QCol->Doing("License", "General Public License 3");
 	QCol->Doing("Config", ConfigCreation());
 	BaseCommands();
+	ProjectCommands();
 	do {
 		QCol->Yellow(Prompt());
 		QCol->Cyan("");

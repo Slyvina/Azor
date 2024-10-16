@@ -28,17 +28,71 @@
 #pragma once
 #include <memory>
 #include <SlyvGINIE.hpp>
+#include "Azor_Config.hpp"
+
 
 namespace Slyvina {
 	namespace Azor {
-		class _Azor_Project; typedef std::shared_ptr<_Azor_Project> Azor_Project;
+		class _Azor_Project; typedef std::shared_ptr<_Azor_Project> Azor_Project; 
+		class _Azor_Entry; typedef std::shared_ptr<_Azor_Entry> Azor_Entry;
+		struct Azor_CDPrefix { std::string Prefix{ "" }; uint32 Reset{ 0 }, CD{ 0 }; };
+
+		struct Azor_Index {
+			int32 id{ 0 };
+			uint64 size{ 0 };
+			uint64 offset{ 0 };
+			bool valid{ true };
+		};
 
 		class _Azor_Project {
 		private:
 			String pname{ "" };
+			Units::GINIE RawConfig{ nullptr };
 		public:
+			std::map<int, Azor_Index> Indexes{};
+			static Azor_Project Use(std::string _pname);
+			static Azor_Project Current();
+			~_Azor_Project();
+			inline _Azor_Project() {}
+			_Azor_Project(std::string _pname);
+			inline String ProjectFileName() const { return ProjectPath() + "/" + pname + ".azor"; }
+			inline String ProjectIndexFile() { return ProjectPath() + "/" + pname + ".index"; }
+			inline String ProjectContentFile() { return ProjectPath() + "/" + pname + ".content"; }
+			inline String GitHub() { return RawConfig->Value("GITHUB", "REPOSITORY"); }
+			inline void GitHub(String NV) { RawConfig->Value("GITHUB", "REPOSITORY", NV); }
+			std::vector<std::string>* Tags();
+			std::vector<std::string>* Prefixes();
+			Azor_CDPrefix Prefix(std::string tag);
 			String Name();
+			void SaveIndexes();
+			Azor_Index& Index(int idx);
+			String ParsePure(String pure);
+			bool HasTag(String Tag);
+			void NewTag(String Tag);
+			int HighIndex();
 		};
+
+		class _Azor_Entry {
+		private:
+			std::map<String, String> core{};
+			bool modified{ false };
+			_Azor_Project* parent{ nullptr };
+			int index{ 0 };
+		public:
+			void GetMe(InFile stream);
+			void GetMe();
+			void Pure(std::string a);
+			String Pure();
+			String Text();
+			inline int ID() { return index; }
+			void Tag(std::string nt, bool createifnotexistent = false);
+			String Tag();
+		};
+
+
+		String Using();
+		String Prompt();
+		void ProjectCommands();
 
 	}
 }
