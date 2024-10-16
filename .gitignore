@@ -7,6 +7,11 @@
 *.obj
 Azor/Azor/x64
 
+# Compiled C# stuff
+Azor_From_Devlog/bin
+Azor_From_Devlog/obj
+Azor_From_Devlog/Properties/launchSettings.json
+
 # Compiled Linux Stuff
 Linux/Exe
 *.o
