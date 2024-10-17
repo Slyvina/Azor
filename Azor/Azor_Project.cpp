@@ -22,13 +22,18 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.16
+// Version: 24.10.17 I
 // End License
+
 #include "Azor_Project.hpp"
 #include "Azor_CommandRegister.hpp"
 #include "Azor_Config.hpp"
 #include <SlyvQCol.hpp>
 #include <SlyvTime.hpp>
+#include <SlyvRandom.hpp>
+#include <SlyvRoman.hpp>
+
+using namespace std;
 
 #undef PRJ_DEBUG
 
@@ -72,7 +77,7 @@ namespace Slyvina {
 				while (!bix->EndOfFile()) {
 					//if (bix.EOF) { Console.WriteLine($"ERROR! Record {want} not found"); goto closure; } // I hate the "goto" command but in this particular case it's the safest way to go! (No I do miss the "defer" keyword Go has!)
 					tag = bix->ReadByte();
-					if (tag != 0) { QCol->Error(TrSPrintF("Unknown index command tag #%d!",tag));  goto closure; }					cnt++;
+					if (tag != 0) { QCol->Error(TrSPrintF("Unknown index command tag #%d (position %x)!",tag,bix->Position()-1));  goto closure; }					cnt++;
 
 					Index = Azor_Index();
 					Index.id = bix->ReadInt(); high = std::max(Index.id, high);
@@ -89,7 +94,7 @@ namespace Slyvina {
 			_Using = pname;			
 
 		}
-		_Azor_Project::~_Azor_Project() { QCol->Doing("Closing", pname); QCol->Reset(); }
+		_Azor_Project::~_Azor_Project() { QCol->Doing("Closing", pname); RawConfig->Value("Azor", "Closed", CurrentDate() + "; " + CurrentTime()); QCol->Reset(); }
 		Azor_Project _Azor_Project::Use(std::string _pname) {
 			if (_PrjReg.count(Upper(_pname))) return _PrjReg[_pname];
 			auto fname = ProjectPath() + "/" + _pname + ".azor";
@@ -135,6 +140,18 @@ namespace Slyvina {
 			return ret;
 		}
 
+		void _Azor_Project::Prefix(std::string tag, Azor_CDPrefix pref, bool noautosave) {
+			auto TAS{ RawConfig->AutoSave };
+			if (noautosave) RawConfig->AutoSave = "";
+			auto ft{ "CDP:" + tag };
+			Chat("Setting prefix data for ", ft);
+			RawConfig->Value(ft, "Prefix", pref.Prefix);
+			RawConfig->Value(ft, "CD", to_string(pref.CD));
+			RawConfig->Value(ft, "Reset", to_string(pref.Reset));
+			RawConfig->AutoSave = TAS;
+			RawConfig->AutoSave = TAS;
+		}
+
 		String Slyvina::Azor::_Azor_Project::Name() { return pname; }
 
 		void _Azor_Project::SaveIndexes() {
@@ -142,7 +159,7 @@ namespace Slyvina {
 			for (auto idxv : Indexes) {
 				auto& idx{ idxv.second };
 				if (idx.valid) {
-					bix->Write('0');
+					bix->Write('\0');
 					bix->Write(idx.id);
 					bix->Write(idx.size);
 					bix->Write(idx.offset);
@@ -200,14 +217,226 @@ namespace Slyvina {
 			return VectorContains(*l, Upper(Tag));
 		}
 
-		void _Azor_Project::NewTag(String Tag) {
-			QCol->Error("NewTag not yet implemented");
+		void _Azor_Project::NewTag(String atag) {
+			auto tag{ Trim(Upper(atag)) };
+			auto CurrentProject{ this };
+			if (tag == "") { QCol->Error("No Tag!"); return; } else if (CurrentProject == nullptr) { QCol->Error("No project!"); } else if (IndexOf(tag, ' ') >= 0) { QCol->Error("Invalid tag!"); } else if (CurrentProject->HasTag(tag)) { QCol->Error("Ttag " + tag + " already exists!"); } else {
+				auto
+					FMin = FColMin(),
+					FMax = FColMax(),
+					BMin = BColMin(),
+					BMax = BColMax();
+				auto
+					FR = Rand.Get(FMin.R, FMax.R),
+					FG = Rand.Get(FMin.G, FMax.G),
+					FB = Rand.Get(FMin.B, FMax.B),
+					BR = (int)(FR / 20),
+					BG = (int)(FG / 20),
+					BB = (int)(FB / 20);
+				if (BMax.R > 0) BR = Rand.Get(BMin.R, BMax.R);
+				if (BMax.G > 0) BG = Rand.Get(BMin.G, BMax.G);
+				if (BMax.B > 0) BB = Rand.Get(BMin.B, BMax.B);
+				RawConfig->Add("LISTS", "TAGS", tag, true, true); //CurrentProject.Data.Add("TAGS", tag);
+				RawConfig->Value("Tag:" + tag, "Head", TrSPrintF("background-color:rgb(0,0,0); color:rgb(%d,%d,%d);", FR, FG, FB));
+				RawConfig->Value("Tag:" + tag, "Content", TrSPrintF("background-color:rgb(%d,%d,%d); color:rgb(%d,%d,%d);", BR, BG, BB, FR, FG, FB));
+				QCol->Doing("Added tag", tag);
+				AddEntry("SITE","Added tag "+tag,true);
+				//GUI.UpdateTags();
+			}
 		}
 
 		int _Azor_Project::HighIndex() {
 			auto ret{ 0 };
-			for (auto r : Indexes) ret = std::max(ret, r.first);
+			for (auto& r : Indexes) ret = std::max(ret, r.first);
 			return ret;
+		}
+
+		int _Azor_Project::CountRecords() {
+			auto ret{ 0 };
+			for (auto& r : Indexes) if (r.second.valid) ret++;
+			return ret;
+		}
+
+		void _Azor_Project::List(int start, int end) {
+			static auto tagtab{ 0 };
+			String olddate{ "" };
+			if (start > end) {
+				QCol->Error("Invalid input for list!");
+				return;
+			}
+			for (auto& ti : Indexes) {
+				if (ti.first >= start && ti.first <= end) {
+					auto ent{ Entry(ti.first) };
+					if (!ent) {
+						QCol->Error(TrSPrintF("Null pointer received for entry #%d", ti.first));
+						continue;
+					}
+					if (olddate != ent->Date()) {
+						QCol->LGreen(ent->Date()+"\n");
+						olddate = ent->Date();
+					}
+					QCol->Cyan(TrSPrintF("%9d ", ti.first));
+					tagtab = std::max(tagtab, (int)ent->Tag().size());
+					QCol->LMagenta(TabStr(ent->Tag(), tagtab + 1));
+					QCol->Yellow(ent->Pure() + "\n");
+				}
+			}
+		}
+
+		Azor_Entry _Azor_Project::Entry(int i) {
+			if (!Indexes.count(i)) { QCol->Error("Unidentified entry index"); return nullptr; }
+			return std::make_shared<_Azor_Entry>(this, i);
+		}
+
+		Azor_Color _Azor_Project::FColMin() {
+			Azor_Color ret{ (Byte)RawConfig->NewValue("FColMin","R",127),(Byte)RawConfig->NewValue("FColMin","G",127),(Byte)RawConfig->NewValue("FColMin","B",127),RawConfig->NewValue("FColMin","H",0),(Byte)RawConfig->NewValue("FColMin","S",100),(Byte)RawConfig->NewValue("FColMin","V",100) };
+			return ret;
+		}
+
+		Azor_Color _Azor_Project::BColMin() {
+			Azor_Color ret{ (Byte)RawConfig->NewValue("BColMin","R",0),(Byte)RawConfig->NewValue("BColMin","G",0),(Byte)RawConfig->NewValue("BColMin","B",0),RawConfig->NewValue("BColMin","H",0),(Byte)RawConfig->NewValue("BColMin","S",100),(Byte)RawConfig->NewValue("BColMin","V",0) };
+			return ret;
+		}
+		Azor_Color _Azor_Project::FColMax() {
+			Azor_Color ret{ (Byte)RawConfig->NewValue("FColMax","R",255),(Byte)RawConfig->NewValue("FColMax","G",255),(Byte)RawConfig->NewValue("FColMax","B",255),RawConfig->NewValue("FColMax","H",0),(Byte)RawConfig->NewValue("FColMax","S",100),(Byte)RawConfig->NewValue("FColMax","V",100) };
+			return ret;
+		}
+
+		Azor_Color _Azor_Project::BColMax() {
+			Azor_Color ret{ (Byte)RawConfig->NewValue("BColMax","R",0),(Byte)RawConfig->NewValue("BColMax","G",0),(Byte)RawConfig->NewValue("BColMax","B",0),RawConfig->NewValue("BColMax","H",0),(Byte)RawConfig->NewValue("BColMax","S",100),(Byte)RawConfig->NewValue("BColMax","V",50) };
+			return ret;
+		}
+
+		void _Azor_Project::AddEntry(String Tag, String Content, bool forcenewtag) {
+			if (forcenewtag && (!HasTag(Tag))) NewTag(Tag);
+			//QCol->Error("Adding new entries not yet implemented");
+			//auto ent{ Entry(HighIndex() + 1) };
+			auto ent{ std::make_shared<_Azor_Entry>(this) };
+			auto ActContent{ Content };
+			auto CDPA{ Prefixes() };
+			for (auto& CDP : *CDPA) {
+				auto CD{ Prefix(CDP) };
+				CD.CD--;
+				if (CD.CD <= 0) {
+					ActContent = CD.Prefix + ActContent;
+					CD.CD += CD.Reset;
+				}
+				Prefix(CDP, CD, true);
+			}		
+			ent->Pure(ActContent);
+			ent->Tag(Tag);
+			ent->UpdateMe();
+			AutoPush--;
+			if (AutoPush > 1) { QCol->Yellow("Azor requires "); QCol->Cyan(std::to_string(AutoPush)); QCol->Yellow(" more entries before the autopush.\n"); }
+			else if (AutoPush == 1) { QCol->Yellow("Azor requires "); QCol->Cyan("1"); QCol->Yellow(" more entry before the autopush.\n"); }
+			else {
+				Generate();
+				Push();
+			}
+		}
+
+		void _Azor_Project::Generate(bool andpush) {
+			//QCol->Error("Generating pages has not yet been implemented!");
+			String html_template;
+			auto cp{ this }; if (cp == nullptr) { QCol->Error("GEN: No project!"); return; }
+			/* C#
+			try {
+				System.IO.Directory.CreateDirectory(OutDir);
+			} catch (Exception e) {
+				GUI.WriteLn($"GEN: {e.Message}");
+				return;
+			}
+			//*/
+			// C++
+			MakeDir(OutDir());
+			int pages = cp->CountRecords() / 200;
+			int page = 1;
+			int pcountdown = 200;
+			bool justnewpaged = false;
+			String olddate{ "____OLD____" };
+			String iconext[4]  {"png", "gif", "svg", "jpg"};
+			if (cp->CountRecords() % 200 > 0) pages++;
+			try {
+				html_template = FLoadString(Trim(cp->Template()));
+			} catch (std::runtime_error e) {
+				QCol->Error("html_template "+cp->Template() + " could not be properly loaded!");
+				QCol->LMagenta(String(e.what()) + "\n");
+				//GUI.WriteLn($"GEN:html_template {cp.html_template} could not be properly loaded!");
+				return;
+			}
+			QCol->Yellow("Exporting...");
+			String pageline = "";
+			for (int p = 1; p <= pages; p++) {
+				if (page == p) pageline += TrSPrintF("<big><big>%d</big></big> ", p); else pageline += "<a href='" + cp->ProjectName() + TrSPrintF("_DevLog_Page_%d.html'>%d</a> ", p, p);
+			}
+			pageline = Trim(pageline);
+			String content{ TrSPrintF("<table style=\"width:%d\">\n",ExportTableWidth()) };
+			content += "<tr><td colspan=3 align=center>" + pageline + "</td></tr>\n";
+			for (int i = HighIndex(); i > 0; i--) {
+				//if (i % 6 == 0) { GUI.Write("."); Console.Write($".{i}."); }
+				justnewpaged = false;
+				auto rec = Entry(i); //var rec = new dvEntry(cp, i, true);
+				if (rec) {
+					if (rec->Date() != olddate) content += "<tr><td align=center colspan=3 style='font-size:30pt;'>- = " + rec->Date() + " = -</td></tr>\n"; olddate = rec->Date();
+					string headstyle = RawConfig->Value("Tag:" + rec->Tag(), "HEAD"); //cp.Data.C($"HEAD.{rec.Tag.ToUpper()}");
+					string contentstyle =  RawConfig->Value("Tag:" + rec->Tag(), "CONTENT"); //cp.Data.C($"INHD.{rec.Tag.ToUpper()}");
+					content += TrSPrintF("<tr valign=top><td align=left><a id='dvRec_%d'></a>", rec->ID()) + rec->Time() + "</td><td style=\"" + headstyle + "\">" + rec->Tag() + TrSPrintF("</td><td style = 'width: %d; ", ExportContentWidth()) + contentstyle + TrSPrintF("'><div style = \"width: %d; overflow-x:auto;\">", ExportContentWidth());
+					auto alticon = AltIcon();
+					if (alticon == "") {
+						String
+							icon{ OutDir() + "/Icons/" + Lower(rec->Tag()) },
+							neticon{ "Icons/" + Lower(rec->Tag()) };
+						icon = StReplace(icon, "#", "hashtag");
+						neticon = StReplace(neticon, "#", "%23");
+						for(String pfmt : iconext) {
+							String iconfile{ icon + "." + pfmt };
+							iconfile = StReplace(iconfile,"#", "%23");
+							if (FileExists(iconfile)) { content += "<img style='float:" + IconFloat() + TrSPrintF("; height: %d' src='", IconHeight()) + neticon + "." + pfmt + "' alt = '" + rec->Tag() + "' > "; break; }
+						}
+					} else {
+						//content.Append($"<img style='float:{cp.GetDataDefault("EXPORT.ICONFLOATPOSITION", "Right")}; height:{cp.GetDataDefaultInt("EXPORT.ICONHEIGHT", 50)};'  src='{alticon}' alt='{rec.Tag}'>"); 
+						content += "<img style='float:" + IconFloat() + TrSPrintF(";' height='%d' src='", IconHeight()) + alticon = "' alt='" + rec->Tag() + "'>";
+					}
+					content += rec->Text() + "</div></td></tr>\n";
+					pcountdown--;
+					if (pcountdown <= 0) {
+						pcountdown = 200;
+						justnewpaged = true;
+						content += "<tr><td colspan=3 align=center>" + pageline + "</td></tr>\n</table>\n\n";
+						SaveString(OutDir() + "/" + ProjectName() + TrSPrintF("_DevLog_Page_%d.html", page), StReplace(html_template, "@CONTENT@", content));
+						page++;
+						pageline = "";
+						for (int p = 1; p <= pages; p++) {
+							if (page == p) pageline += TrSPrintF("<big><big>%d</big></big> ", p); else pageline += "<a href='" + cp->ProjectName() + TrSPrintF("_DevLog_Page_%d.html'>%d</a> ", p, p);
+						}
+						content = TrSPrintF("<table style=\"width:%d\">\n",ExportTableWidth());
+						content+="<tr><td colspan=3 align=center>"+pageline+"</td></tr>\n";
+						QCol->Pink(".");
+					}
+				}
+			}
+			if (!justnewpaged) {
+				content += "<tr><td colspan=3 align=center>" + pageline + "</td></tr>\n";
+				SaveString(OutDir() + "/" + ProjectName() + TrSPrintF("_DevLog_Page_%d.html", page), StReplace(html_template, "@CONTENT@", content));
+			}
+			QCol->Cyan(" Done\n");
+			//Console.WriteLine(" GENERATED");		
+		}
+
+		void _Azor_Project::Push() {
+			QCol->Error("Pushing has not yet been implemented");
+		}
+
+		void _Azor_Project::SaveRaw() {
+			QCol->Doing("Saving",ProjectFileName());
+			RawConfig->SaveSource(ProjectFileName(), "Force saved by user on " + CurrentDate() + "; " + CurrentTime());
+		}
+
+		_Azor_Entry::~_Azor_Entry() {
+			if (modified) {
+				//QCol->Warn("WARNING! Entry has been modified, but there's no update routine here (yet)");
+				UpdateMe();
+			}
 		}
 
 		void _Azor_Entry::GetMe(InFile stream) {
@@ -215,7 +444,7 @@ namespace Slyvina {
 				auto Idx{ &(parent->Indexes[index]) };
 				core.clear();
 				stream->Position(Idx->offset);
-				while (stream->Position() <= Idx->offset + Idx->size) {
+				while (stream->Position() < Idx->offset + Idx->size) {
 					auto tag{ stream->ReadByte() }; if (tag != 0) { QCol->Error(TrSPrintF("Unknown content tag: %d", tag)); return; }
 					auto key{ stream->ReadString() }, value{ stream->ReadString() };
 					core[key] = value;
@@ -239,13 +468,68 @@ namespace Slyvina {
 		String _Azor_Entry::Text() { return core["TEXT"]; }
 
 		void _Azor_Entry::Tag(std::string nt, bool createifnotexistent) {
+			Trans2Upper(nt);
 			if (!parent->HasTag(nt)) {
 				if (createifnotexistent) parent->NewTag(nt); else { QCol->Error("Tag " + nt + " not existent!"); return; }
 			}
 			core["TAG"] = nt;
+			modified = true;
 		}
 
 		String _Azor_Entry::Tag() { return core["TAG"]; }
+
+		
+
+		_Azor_Entry::_Azor_Entry(_Azor_Project* p) {
+			parent = p;
+			index = p->HighIndex() + 1;
+			core["DATE"] = CurrentDate();
+			core["TIME"] = CurrentTime();
+			core["TAG"] = "SITE"; 
+			//if (!p->HasTag("SITE")) p->NewTag("SITE");
+			core["PURE"] = "? Nothing";
+			core["TEXT"] = "? Nothing";
+			modified = false;
+		}
+
+		_Azor_Entry::_Azor_Entry(_Azor_Project* p, int _idx) {
+			parent = p;
+			index = _idx;
+			GetMe();
+			if (!core.count("DATE")) core["DATE"] = CurrentDate();
+			if (!core.count("TIME")) core["TIME"] = CurrentTime();
+			modified = false;
+		}
+
+		_Azor_Entry::_Azor_Entry(_Azor_Project* p, String _Tag, String _Pure) {
+			parent = p;
+			index = p->HighIndex() + 1;
+			modified = true;
+			Tag(_Tag, true);
+			Pure(_Pure);
+		}
+
+		void _Azor_Entry::UpdateMe(OutFile stream) {
+			auto _index{ &parent->Indexes[index] };
+			_index->id = index;
+			_index->offset = stream->Size(); //stream->Position();
+			_index->valid = true;
+			for (auto cent : core) {
+				stream->Write('\0');
+				stream->Write(cent.first);
+				stream->Write(cent.second);
+			}
+			_index->size = (uint64)stream->Position() - _index->offset;
+			QCol->Doing("Saved", TrSPrintF("Entry #%d", _index->id));
+		}
+
+		void _Azor_Entry::UpdateMe() {
+			auto BT{ AppendFile(parent->ProjectContentFile()) };
+			UpdateMe(BT);
+			parent->SaveIndexes();
+			BT->Close();
+			modified = false;
+		}
 
 
 
@@ -297,10 +581,106 @@ namespace Slyvina {
 			}
 		}
 
+		static void pcmd_list(carg f) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			if (f.size() == 0) { c->List(c->HighIndex() - 25, c->HighIndex()); return; }
+			for (auto cnd : f) {
+				if (Prefixed(cnd, "-")) {
+					c->List(0, ToInt(cnd.substr(1))); 
+					return;
+				}
+				if (Suffixed(cnd,"-")) {
+					c->List(0, ToInt(Left(cnd,cnd.size()-1)));
+					return;
+				}
+				auto p{ IndexOf(cnd,'-') };
+				if (p < 0) c->List(ToInt(cnd)); else c->List(ToInt(cnd.substr(0, p)), ToInt(cnd.substr(p + 1)));
+			}
+		}
+
+		static void pcmd_addtag(carg f) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			if (f.size() == 0) { QCol->Error("No tags"); return; }
+			for (auto tag : f) c->NewTag(tag);
+		}
+
+		static void pcmd_add(carg f) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			if (f.size() < 2) { QCol->Error("Not enough imput for adding"); return; }
+			auto nt{ f[0] };
+			String ns{ "" };
+			for (int i = 1; i < f.size(); ++i) {
+				if (ns.size()) ns += " ";
+				ns += f[i];
+			}
+			c->AddEntry(nt, ns);
+		}
+		static void pcmd_ntadd(carg f) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			if (f.size() < 2) { QCol->Error("Not enough imput for adding"); return; }
+			auto nt{ f[0] };
+			String ns{ "" };
+			for (int i = 1; i < f.size(); ++i) {
+				if (ns.size()) ns += " ";
+				ns += f[i];
+			}
+			c->AddEntry(nt, ns, true);
+		}
+
+		static void pcmd_indexes(carg f) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			QCol->Reset();
+			for (auto& i : c->Indexes)
+				//printf("Index %d; offset %d, size %s\n", i.first, (int)i.second.offset, (int)i.second.size);
+				std::cout << "Index: " << i.first << "; offset: " << i.second.offset << "; size: " << i.second.size << "\n";
+		}
+		
+		static void pcmd_save(carg f) {
+			NoProject;
+			_Azor_Project::Current()->SaveRaw();
+		}
+
+		static bool isnum(String s) {
+			for (int i = 0; i < s.size(); i++) {
+				if (s[i] < '0' || s[i]>'9') return false;
+			}
+			return s.size() > 0;
+		}
+		static void pcmd_take(carg f) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			String Tag{ "TEST" };
+			for (auto a : f) {
+				if (c->HasTag(a)) Tag = a;
+				else if (isnum(a)) c->Take(ToInt(a));
+				else { QCol->Error("Parameter " + a + " has not been understood"); return; }
+			}
+			c->Take(c->Take() + 1);
+			c->AddEntry(Tag, "Take " + ToRoman(c->Take()));
+		}
+		static void pcmd_gen(carg) {
+			NoProject;
+			_Azor_Project::Current()->Generate();
+		}
+
 		void ProjectCommands() {
 			RegCommand("Use", pcmd_use);
 			RegCommand("Tags", pcmd_tags);
 			RegCommand("Prefixes", pcmd_prefixes);
+			RegCommand("List", pcmd_list);
+			RegCommand("AddTag", pcmd_addtag);
+			RegCommand("NewTag", pcmd_addtag);
+			RegCommand("Add", pcmd_add);
+			RegCommand("ntAdd", pcmd_ntadd);
+			RegCommand("Indexes", pcmd_indexes);
+			RegCommand("Save", pcmd_save);
+			RegCommand("take", pcmd_take);
+			RegCommand("gen", pcmd_gen);
 		}
 #pragma endregion
 }

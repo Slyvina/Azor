@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.16
+// Version: 24.10.17
 // End License
 #include <Slyvina.hpp>
 
@@ -38,6 +38,7 @@ using namespace Slyvina::Units;
 
 namespace Slyvina {
 	namespace Azor {
+		static std::map<String, Azor_Command> _Reg{};
 
 #pragma region "Base Commands"
 		static void cmd_cls(std::vector<String>) { cls(); }
@@ -63,9 +64,18 @@ namespace Slyvina {
 				QCol->LMagenta(f.first + "\n");
 			}
 		}
+
+		static void cmd_help(carg a) {
+			QCol->Yellow("Azor supports the next commands\n");
+			for (auto cm : _Reg) {
+				if (cm.second != cmd_fuck) {
+					QCol->Red("= ");
+					QCol->LGreen(cm.first + "\n");
+				}
+			}
+		}
 #pragma endregion
 
-		static std::map<String, Azor_Command> _Reg{};
 
 		void RegCommand(std::string CS, Azor_Command AC) {
 			Trans2Upper(CS);
@@ -81,6 +91,7 @@ namespace Slyvina {
 			RegCommand("shit", cmd_fuck);
 			RegCommand("Paratest", cmd_paratest);
 			RegCommand("dir", cmd_dir);
+			RegCommand("Help", cmd_help);
 		}
 		void Execute(std::string cmd, std::vector<std::string> args) {
 			cmd = Trim(cmd);

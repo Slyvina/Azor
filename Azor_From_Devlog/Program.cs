@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.16 II
+// Version: 24.10.17
 // End License
 using System.Linq.Expressions;
 using System.Net.Quic;
@@ -145,10 +145,10 @@ class MainProgramForAzorFromDevLog {
 			}
 		}
 		var tag = "";
-		foreach(var pref in Oud.List("CDPREFIX")) {
+		foreach(var pref in Oud.List("CDPREFIX")) if (pref!="" & (!pref.Trim().StartsWith("#"))) {
 			var p = pref.IndexOf(":"); if(p<=0) { QCol.QuickError($"Countdown prefix syntax error: {pref}"); continue; }
 			var fld = pref.Substring(0, p);
-			var val = pref.Substring(p + 1);
+			var val = pref.Substring(p + 1);			
 			if (tag=="" && fld!="NEW") { QCol.QuickError($"Countdown field not tagged {pref}"); continue; }
 			switch (fld) {
 				case "NEW":
