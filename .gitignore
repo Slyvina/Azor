@@ -6,6 +6,7 @@
 *.pdb
 *.obj
 Azor/Azor/x64
+Azor/x64/
 
 # Compiled C# stuff
 Azor_From_Devlog/bin
