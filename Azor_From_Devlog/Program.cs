@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.17
+// Version: 24.10.31
 // End License
 using System.Linq.Expressions;
 using System.Net.Quic;
@@ -137,6 +137,9 @@ class MainProgramForAzorFromDevLog {
 								QCol.QuickError($"Unknown {vcl.ToLower()} platform {vfd}");
 								break;
 						}
+						break;
+					case "VAR":
+						Nieuw["VAR", vfd] = vvl;
 						break;
 					default:
 						QCol.QuickError($"Class {vcl} unknown, so cannot parse field {vfd} ({vvl})");

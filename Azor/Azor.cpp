@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.15 II
+// Version: 24.10.31
 // End License
 
 #include <SlyvQCol.hpp>
@@ -43,6 +43,8 @@ int main(int cargs, char** args) {
 	QCol->Doing("Coded by", "Jeroen P. Broks");
 	QCol->Doing("License", "General Public License 3");
 	QCol->Doing("Config", ConfigCreation());
+	QCol->Doing("Executable", ChReplace(args[0], '\\', '/'));
+	QCol->Doing("Launched From", CurrentDir());
 	BaseCommands();
 	ProjectCommands();
 	do {

@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.16
+// Version: 24.10.31
 // End License
 
 #include <SlyvGINIE.hpp>
@@ -55,6 +55,18 @@ namespace Slyvina {
 
 		String ProjectPath() {
 			return Ask(MainConfig, "Project", "Directory", "Full Directory of where the projects should be stored: ");
+		}
+
+		String ConverterProgram() {
+			return Ask(MainConfig, "Convert", "Program", "Executable of the converter program please: ");
+		}
+
+		bool HasMacro(String Macro, String Platform) {
+			return MainConfig->HasList("MACRO::"+Macro,Platform);
+		}
+
+		std::vector<String>* Macro(String _Macro, String _Platform) {
+			return HasMacro(_Macro, _Platform) ? MainConfig->List("MACRO::"+_Macro, _Platform) : nullptr;
 		}
 
 	}

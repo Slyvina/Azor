@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.17 I
+// Version: 24.10.31
 // End License
 
 #include "Azor_Project.hpp"
@@ -96,7 +96,7 @@ namespace Slyvina {
 		}
 		_Azor_Project::~_Azor_Project() { QCol->Doing("Closing", pname); RawConfig->Value("Azor", "Closed", CurrentDate() + "; " + CurrentTime()); QCol->Reset(); }
 		Azor_Project _Azor_Project::Use(std::string _pname) {
-			if (_PrjReg.count(Upper(_pname))) return _PrjReg[_pname];
+			if (_PrjReg.count(Upper(_pname))) { _Using = _pname; return _PrjReg[Upper(_pname)]; }
 			auto fname = ProjectPath() + "/" + _pname + ".azor";
 			if (!FileExists(fname)) {
 				QCol->Error("Azor project not found!");
@@ -309,8 +309,7 @@ namespace Slyvina {
 
 		void _Azor_Project::AddEntry(String Tag, String Content, bool forcenewtag) {
 			if (forcenewtag && (!HasTag(Tag))) NewTag(Tag);
-			//QCol->Error("Adding new entries not yet implemented");
-			//auto ent{ Entry(HighIndex() + 1) };
+			else if (!HasTag(Tag)) { QCol->Error("Tag \"" + Tag + "\" doesn't exist!"); return; }			
 			auto ent{ std::make_shared<_Azor_Entry>(this) };
 			auto ActContent{ Content };
 			auto CDPA{ Prefixes() };
@@ -318,6 +317,7 @@ namespace Slyvina {
 				auto CD{ Prefix(CDP) };
 				CD.CD--;
 				if (CD.CD <= 0) {
+					CD.Prefix = StReplace(CD.Prefix,"\\\"", "\"");
 					ActContent = CD.Prefix + ActContent;
 					CD.CD += CD.Reset;
 				}
@@ -326,12 +326,14 @@ namespace Slyvina {
 			ent->Pure(ActContent);
 			ent->Tag(Tag);
 			ent->UpdateMe();
+			List(ent->ID());
 			AutoPush--;
 			if (AutoPush > 1) { QCol->Yellow("Azor requires "); QCol->Cyan(std::to_string(AutoPush)); QCol->Yellow(" more entries before the autopush.\n"); }
 			else if (AutoPush == 1) { QCol->Yellow("Azor requires "); QCol->Cyan("1"); QCol->Yellow(" more entry before the autopush.\n"); }
 			else {
 				Generate();
 				Push();
+				AutoPush += 10;
 			}
 		}
 
@@ -375,13 +377,14 @@ namespace Slyvina {
 			for (int i = HighIndex(); i > 0; i--) {
 				//if (i % 6 == 0) { GUI.Write("."); Console.Write($".{i}."); }
 				justnewpaged = false;
+				if (!Indexes.count(i)) continue;
 				auto rec = Entry(i); //var rec = new dvEntry(cp, i, true);
 				if (rec) {
 					if (rec->Date() != olddate) content += "<tr><td align=center colspan=3 style='font-size:30pt;'>- = " + rec->Date() + " = -</td></tr>\n"; olddate = rec->Date();
 					string headstyle = RawConfig->Value("Tag:" + rec->Tag(), "HEAD"); //cp.Data.C($"HEAD.{rec.Tag.ToUpper()}");
 					string contentstyle =  RawConfig->Value("Tag:" + rec->Tag(), "CONTENT"); //cp.Data.C($"INHD.{rec.Tag.ToUpper()}");
 					content += TrSPrintF("<tr valign=top><td align=left><a id='dvRec_%d'></a>", rec->ID()) + rec->Time() + "</td><td style=\"" + headstyle + "\">" + rec->Tag() + TrSPrintF("</td><td style = 'width: %d; ", ExportContentWidth()) + contentstyle + TrSPrintF("'><div style = \"width: %d; overflow-x:auto;\">", ExportContentWidth());
-					auto alticon = AltIcon();
+					auto alticon = rec->AltIcon();
 					if (alticon == "") {
 						String
 							icon{ OutDir() + "/Icons/" + Lower(rec->Tag()) },
@@ -395,7 +398,7 @@ namespace Slyvina {
 						}
 					} else {
 						//content.Append($"<img style='float:{cp.GetDataDefault("EXPORT.ICONFLOATPOSITION", "Right")}; height:{cp.GetDataDefaultInt("EXPORT.ICONHEIGHT", 50)};'  src='{alticon}' alt='{rec.Tag}'>"); 
-						content += "<img style='float:" + IconFloat() + TrSPrintF(";' height='%d' src='", IconHeight()) + alticon = "' alt='" + rec->Tag() + "'>";
+						content += "<img style='float:" + IconFloat() + TrSPrintF(";' height='%d' src='", IconHeight()) + alticon + "' alt='" + rec->Tag() + "' />";
 					}
 					content += rec->Text() + "</div></td></tr>\n";
 					pcountdown--;
@@ -424,12 +427,36 @@ namespace Slyvina {
 		}
 
 		void _Azor_Project::Push() {
-			QCol->Error("Pushing has not yet been implemented");
+			//QCol->Error("Pushing has not yet been implemented");
+			auto PWD{ CurrentDir() };
+			ChangeDir(OutDir());
+			auto Cnt{ RawConfig->IntValue("Count","Pushes") };
+			RawConfig->Value("Count", "Pushes", ++Cnt);
+			QCol->Doing("Collecting", "Data"); QCol->Reset(); system("git add *");
+			QCol->Doing("Committing", "Data"); QCol->Reset(); system(string("git commit -m \"Azor push "+CurrentDate()+"; "+CurrentTime()+TrSPrintF(" Push %d\"",Cnt)).c_str());
+			QCol->Doing("Pushing", "Data"); QCol->Reset(); system("git push");
+			ChangeDir(PWD);
 		}
 
 		void _Azor_Project::SaveRaw() {
 			QCol->Doing("Saving",ProjectFileName());
 			RawConfig->SaveSource(ProjectFileName(), "Force saved by user on " + CurrentDate() + "; " + CurrentTime());
+		}
+
+		void _Azor_Project::Unlink(int victim) {
+			if (!Indexes.count(victim))
+				QCol->Error(TrSPrintF("I can't unlink non-existent entry #%d", victim));
+			else
+				Indexes.erase(victim);
+		}
+
+		bool _Azor_Project::HasMacro(String Macro, String Platform) { return RawConfig->HasList("MACRO::" + Macro, Platform); }
+
+		std::vector<String> _Azor_Project::Macro(String _Macro, String _Platform) {
+			if (HasMacro(_Macro, _Platform)) {
+				auto ret{ *RawConfig->List("MACRO::" + _Macro, _Platform) };
+				return ret;
+			} std::vector<String>();
 		}
 
 		_Azor_Entry::~_Azor_Entry() {
@@ -667,6 +694,35 @@ namespace Slyvina {
 			NoProject;
 			_Azor_Project::Current()->Generate();
 		}
+		static void pcmd_del(carg victims) {
+			NoProject;
+			for (auto v : victims) {
+				auto vi{ ToInt(v) };
+				QCol->Doing("Unlinking", vi);
+				_Azor_Project::Current()->Unlink(vi);
+			}
+		}
+		static void pcmd_push(carg) {
+			NoProject;
+			_Azor_Project::Current()->Push();
+		}
+		static void pcmd_modify(carg args) {
+			NoProject;
+			//var args = str.Split(' '); // Not needed!
+			//if (CurrentProject == null) { Annoy("No Project!"); return; }
+			auto CurrentProject{ _Azor_Project::Current() };
+			if (args.size() < 3) { QCol->Error("Modify syntax error!"); return; }
+			auto num{ ToInt(args[0]) };
+			auto e{ CurrentProject->Entry(num) }; if (!e) return; //var e = new dvEntry(CurrentProject, num, true);
+			//if (e == null) { Annoy("Entry couldn't be accessed!"); return; }
+			auto tag{ Upper(args[1]) };
+			if (!CurrentProject->HasTag(tag)) { QCol->Error("There's no tag: "+tag); return; }
+			String sb{ "" };//var sb = new System.Text.StringBuilder();
+			e->Tag(tag);
+			for (int i = 2; i < args.size(); ++i) sb+=args[i]+" ";
+			e->Pure(Trim(sb));
+			//GUI.UpdateEntries(CurrentProject.HighestRecordNumber - 200, CurrentProject.HighestRecordNumber);
+		}
 
 		void ProjectCommands() {
 			RegCommand("Use", pcmd_use);
@@ -681,6 +737,12 @@ namespace Slyvina {
 			RegCommand("Save", pcmd_save);
 			RegCommand("take", pcmd_take);
 			RegCommand("gen", pcmd_gen);
+			RegCommand("unlink", pcmd_del);
+			RegCommand("delete", pcmd_del);
+			RegCommand("del", pcmd_del);
+			RegCommand("erase", pcmd_del);
+			RegCommand("Push", pcmd_push);
+			RegCommand("Modify", pcmd_modify);
 		}
 #pragma endregion
 }

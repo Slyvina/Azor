@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.17 I
+// Version: 24.10.31
 // End License
 
 #pragma once
@@ -101,12 +101,17 @@ namespace Slyvina {
 			void ExportTableWidth(int value) { RawConfig->Value("Export", "TableWidth", value); }
 			int ExportContentWidth() { return RawConfig->NewValue("Export", "ContentWidth", 800); }
 			void ExportContentWidth(int value) { RawConfig->Value("Export", "ContentWidth", value); }
-			String AltIcon() { return RawConfig->Value("Export", "Icon"); }
-			void AltIcon(String v) { RawConfig->Value("Export", "Icon", v); }
+			String AltIcon(String tag) { return RawConfig->Value("Tag:"+tag, "Icon"); }
+			void AltIcon(String tag,String v) { RawConfig->Value("Tag:"+tag, "Icon", v); }
 			String IconFloat() { return RawConfig->NewValue("Export", "IconFloatPosition", "right"); }
 			void IconFloat(String v) { RawConfig->Value("Export", "IconFloatPosition", v); }
 			int IconHeight() { return RawConfig->NewValue("Export", "IconHeight", 50); }
 			void IconHeight(int v) { RawConfig->Value("Export", "IconHeight", v); }
+			void Unlink(int victim);
+			bool HasMacro(String Macro, String Platform = "Always");
+			std::vector<String> Macro(String _Macro, String _Platform = "Always");
+
+			
 		};
 
 		class _Azor_Entry {
@@ -127,6 +132,9 @@ namespace Slyvina {
 			String Tag();
 			String Date() { return core["DATE"]; }
 			String Time() { return core["TIME"]; }
+			String AltIcon() { return parent->AltIcon(Tag()); }
+			String Icon() { return parent->AltIcon(Tag()); }
+			//void Icon(String v) { core["ICON"] = v; }
 			_Azor_Entry(){}
 			_Azor_Entry(_Azor_Project* p);
 			_Azor_Entry(_Azor_Project* p, int _idx);

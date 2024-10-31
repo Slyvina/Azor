@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.16
+// Version: 24.10.31
 // End License
 
 #pragma once
@@ -33,6 +33,9 @@ namespace Slyvina {
 	namespace Azor {
 		String ConfigCreation();
 		String ProjectPath();
+		String ConverterProgram();
+		bool HasMacro(String Macro, String Platform = "Always");
+		std::vector<String>* Macro(String _Macro, String _Platform = "Always");
 	}
 
 }
