@@ -144,7 +144,7 @@ namespace Slyvina {
 			auto TAS{ RawConfig->AutoSave };
 			if (noautosave) RawConfig->AutoSave = "";
 			auto ft{ "CDP:" + tag };
-			Chat("Setting prefix data for ", ft);
+			Chat("Setting prefix data for " << ft);
 			RawConfig->Value(ft, "Prefix", pref.Prefix);
 			RawConfig->Value(ft, "CD", to_string(pref.CD));
 			RawConfig->Value(ft, "Reset", to_string(pref.Reset));
