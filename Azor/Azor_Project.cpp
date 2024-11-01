@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.31
+// Version: 24.11.01
 // End License
 
 #include "Azor_Project.hpp"
@@ -134,7 +134,7 @@ namespace Slyvina {
 
 		Azor_CDPrefix _Azor_Project::Prefix(std::string tag) {
 			auto ft{ "CDP:" + tag };
-			Chat("Getting prefix data for ", ft);
+			Chat("Getting prefix data for " << ft);
 			Azor_CDPrefix ret{ RawConfig->Value(ft,"Prefix"),(uint32)RawConfig->IntValue(ft,"Reset"),(uint32)RawConfig->IntValue(ft,"CD") };
 			Chat("- Returning");
 			return ret;
@@ -456,7 +456,8 @@ namespace Slyvina {
 			if (HasMacro(_Macro, _Platform)) {
 				auto ret{ *RawConfig->List("MACRO::" + _Macro, _Platform) };
 				return ret;
-			} std::vector<String>();
+			} 
+			return std::vector<String>();
 		}
 
 		_Azor_Entry::~_Azor_Entry() {
