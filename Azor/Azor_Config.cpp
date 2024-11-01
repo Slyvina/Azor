@@ -40,7 +40,7 @@ namespace Slyvina {
 	namespace Azor {
 		static GINIE MainConfig{ nullptr };
 
-		String Slyvina::Azor::ConfigCreation() {
+		String ConfigCreation() {
 			if (!MainConfig) {
 				if (!FileExists(AzorConfigFile)) {
 					QCol->Doing("Creating", AzorConfigFile);
