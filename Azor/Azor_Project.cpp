@@ -5,7 +5,7 @@
 // 
 // 
 // 
-// 	(c) Jeroen P. Broks, 2024
+// 	(c) Jeroen P. Broks, 2024, 2025
 // 
 // 		This program is free software: you can redistribute it and/or modify
 // 		it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.11.01
+// Version: 25.03.08
 // End License
 
 #include "Azor_Project.hpp"
@@ -57,7 +57,7 @@ namespace Slyvina {
 			if (FileExists(ProjectFileName())) {
 				QCol->Doing("Using", pname);
 				RawConfig = LoadGINIE(ProjectFileName(), ProjectFileName(), "Project: " + pname + "\nUsed by Azor");
-				if (!RawConfig) {					
+				if (!RawConfig) {
 					QCol->Error(ProjectFileName() + " failed to load");
 					return;
 				}
@@ -91,7 +91,7 @@ namespace Slyvina {
 				QCol->Doing("Records", cnt);
 				QCol->Doing("Highest", high);
 			}
-			_Using = pname;			
+			_Using = pname;
 
 		}
 		_Azor_Project::~_Azor_Project() { QCol->Doing("Closing", pname); RawConfig->Value("Azor", "Closed", CurrentDate() + "; " + CurrentTime()); QCol->Reset(); }
@@ -123,8 +123,8 @@ namespace Slyvina {
 		}
 
 		std::vector<std::string>* _Azor_Project::Tags() {
-			 auto r{ RawConfig->List("Lists", "Tags") }; 
-			 return r; 
+			 auto r{ RawConfig->List("Lists", "Tags") };
+			 return r;
 		}
 
 		std::vector<std::string>* _Azor_Project::Prefixes() {
@@ -208,8 +208,8 @@ namespace Slyvina {
 				if (content != "") content += " ";
 				content += newword;
 			}
-			
-			return content;		
+
+			return content;
 		}
 
 		bool _Azor_Project::HasTag(String Tag) {
@@ -220,7 +220,11 @@ namespace Slyvina {
 		void _Azor_Project::NewTag(String atag) {
 			auto tag{ Trim(Upper(atag)) };
 			auto CurrentProject{ this };
-			if (tag == "") { QCol->Error("No Tag!"); return; } else if (CurrentProject == nullptr) { QCol->Error("No project!"); } else if (IndexOf(tag, ' ') >= 0) { QCol->Error("Invalid tag!"); } else if (CurrentProject->HasTag(tag)) { QCol->Error("Ttag " + tag + " already exists!"); } else {
+			if (tag == "") { QCol->Error("No Tag!"); return; }
+			else if (CurrentProject == nullptr) { QCol->Error("No project!"); }
+			else if (IndexOf(tag, ' ') >= 0) { QCol->Error("Invalid tag!"); }
+			else if (CurrentProject->HasTag(tag)) { QCol->Error("Tag " + tag + " already exists!"); }
+			else {
 				auto
 					FMin = FColMin(),
 					FMax = FColMax(),
@@ -309,7 +313,7 @@ namespace Slyvina {
 
 		void _Azor_Project::AddEntry(String Tag, String Content, bool forcenewtag) {
 			if (forcenewtag && (!HasTag(Tag))) NewTag(Tag);
-			else if (!HasTag(Tag)) { QCol->Error("Tag \"" + Tag + "\" doesn't exist!"); return; }			
+			else if (!HasTag(Tag)) { QCol->Error("Tag \"" + Tag + "\" doesn't exist!"); return; }
 			auto ent{ std::make_shared<_Azor_Entry>(this) };
 			auto ActContent{ Content };
 			auto CDPA{ Prefixes() };
@@ -322,7 +326,7 @@ namespace Slyvina {
 					CD.CD += CD.Reset;
 				}
 				Prefix(CDP, CD, true);
-			}		
+			}
 			ent->Pure(ActContent);
 			ent->Tag(Tag);
 			ent->UpdateMe();
@@ -397,7 +401,7 @@ namespace Slyvina {
 							if (FileExists(iconfile)) { content += "<img style='float:" + IconFloat() + TrSPrintF("; height: %d' src='", IconHeight()) + neticon + "." + pfmt + "' alt = '" + rec->Tag() + "' > "; break; }
 						}
 					} else {
-						//content.Append($"<img style='float:{cp.GetDataDefault("EXPORT.ICONFLOATPOSITION", "Right")}; height:{cp.GetDataDefaultInt("EXPORT.ICONHEIGHT", 50)};'  src='{alticon}' alt='{rec.Tag}'>"); 
+						//content.Append($"<img style='float:{cp.GetDataDefault("EXPORT.ICONFLOATPOSITION", "Right")}; height:{cp.GetDataDefaultInt("EXPORT.ICONHEIGHT", 50)};'  src='{alticon}' alt='{rec.Tag}'>");
 						content += "<img style='float:" + IconFloat() + TrSPrintF(";' height='%d' src='", IconHeight()) + alticon + "' alt='" + rec->Tag() + "' />";
 					}
 					content += rec->Text() + "</div></td></tr>\n";
@@ -423,7 +427,7 @@ namespace Slyvina {
 				SaveString(OutDir() + "/" + ProjectName() + TrSPrintF("_DevLog_Page_%d.html", page), StReplace(html_template, "@CONTENT@", content));
 			}
 			QCol->Cyan(" Done\n");
-			//Console.WriteLine(" GENERATED");		
+			//Console.WriteLine(" GENERATED");
 		}
 
 		void _Azor_Project::Push() {
@@ -456,7 +460,7 @@ namespace Slyvina {
 			if (HasMacro(_Macro, _Platform)) {
 				auto ret{ *RawConfig->List("MACRO::" + _Macro, _Platform) };
 				return ret;
-			} 
+			}
 			return std::vector<String>();
 		}
 
@@ -506,14 +510,14 @@ namespace Slyvina {
 
 		String _Azor_Entry::Tag() { return core["TAG"]; }
 
-		
+
 
 		_Azor_Entry::_Azor_Entry(_Azor_Project* p) {
 			parent = p;
 			index = p->HighIndex() + 1;
 			core["DATE"] = CurrentDate();
 			core["TIME"] = CurrentTime();
-			core["TAG"] = "SITE"; 
+			core["TAG"] = "SITE";
 			//if (!p->HasTag("SITE")) p->NewTag("SITE");
 			core["PURE"] = "? Nothing";
 			core["TEXT"] = "? Nothing";
@@ -615,7 +619,7 @@ namespace Slyvina {
 			if (f.size() == 0) { c->List(c->HighIndex() - 25, c->HighIndex()); return; }
 			for (auto cnd : f) {
 				if (Prefixed(cnd, "-")) {
-					c->List(0, ToInt(cnd.substr(1))); 
+					c->List(0, ToInt(cnd.substr(1)));
 					return;
 				}
 				if (Suffixed(cnd,"-")) {
@@ -667,7 +671,7 @@ namespace Slyvina {
 				//printf("Index %d; offset %d, size %s\n", i.first, (int)i.second.offset, (int)i.second.size);
 				std::cout << "Index: " << i.first << "; offset: " << i.second.offset << "; size: " << i.second.size << "\n";
 		}
-		
+
 		static void pcmd_save(carg f) {
 			NoProject;
 			_Azor_Project::Current()->SaveRaw();
@@ -688,6 +692,7 @@ namespace Slyvina {
 				else if (isnum(a)) c->Take(ToInt(a));
 				else { QCol->Error("Parameter " + a + " has not been understood"); return; }
 			}
+			if (Tag=="TEST" && (!c->HasTag("TEST")) ) c->NewTag("TEST");
 			c->Take(c->Take() + 1);
 			c->AddEntry(Tag, "Take " + ToRoman(c->Take()));
 		}
@@ -724,6 +729,89 @@ namespace Slyvina {
 			e->Pure(Trim(sb));
 			//GUI.UpdateEntries(CurrentProject.HighestRecordNumber - 200, CurrentProject.HighestRecordNumber);
 		}
+		static void pcmd_modtag(carg args) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			for(auto arg:args) {
+				QCol->Doing("Tag",arg);
+				if (!c->HasTag(arg)) { QCol->Error("Tag non-existant!"); continue;}
+				static string items[2] = {"HEAD","CONTENT"};
+				for (auto item:items) {
+					c->ReAsk("TAG:"+arg,item,"New data for tag config item \""+item+"\": ");
+				}
+			}
+		}
+
+		bool _Azor_Project::HasPrefix(String Pref) {
+			Trans2Upper(Pref);
+			Pref=Trim(Pref);
+			auto pl{RawConfig->List("Lists","CDPREFIXES")};
+			for(auto p:*pl) {
+				if (Pref==p) return true;
+			}
+			return false;
+		}
+
+		static void pcmd_modprefix(carg args) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			for(auto arg:args) {
+				QCol->Doing("Prefix",arg);
+				if (!c->HasPrefix(arg)) { QCol->Error("Prefix non-existant!"); continue; }
+				static string items[3] = {"PREFIX","RESET","CD"};
+				for (auto item:items) {
+					c->ReAsk("CDP:"+arg,item,"New data for prefix config item \""+item+"\": ");
+				}
+			}
+		}
+
+		void _Azor_Project::AddPrefix(String Prefix) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			if (c->HasPrefix(Prefix)) {
+					QCol->Error("Prefix \""+Prefix+"\"  already exists!");
+					return;
+			}
+			RawConfig->Add("Lists","CDPrefixes",Upper(Prefix));
+			RawConfig->NewValue("CDP:"+Prefix,"Reset","25");
+			RawConfig->NewValue("CDP:"+Prefix,"CD","25");
+		}
+		static void pcmd_addprefix(carg args) {
+			NoProject;
+			auto c{ _Azor_Project::Current() };
+			for(auto arg:args) {
+				if (c->HasPrefix(arg)) {
+					QCol->Error("Prefix \""+arg+"\"  already exists!");
+					continue;
+				}
+				c->AddPrefix(arg);
+				std::vector<std::string> varg{arg};
+				pcmd_modprefix(varg);
+			}
+		}
+
+		union CE{int i; byte b[4];};
+
+		static void pcmd_modprj(carg args) {
+			NoProject;
+			auto cp{_Azor_Project::Current()};
+			cp->SaveRaw();
+			String cmd{"nano \""+cp->ProjectFileName()+"\""};
+			QCol->Grey("$ "+cmd);
+			CE EC;
+			EC.i = system(cmd.c_str());
+			if (EC.i!=0) {
+				#ifdef SlyvLinux
+				int e=EC.b[1];
+				#else
+				int e=EC.i;
+				#endif // Linux
+				QCol->Error(TrSPrintF("Error returned by nano: %d",e));
+			} else {
+				cp->ReloadRaw();
+			}
+
+		}
 
 		void ProjectCommands() {
 			RegCommand("Use", pcmd_use);
@@ -744,6 +832,13 @@ namespace Slyvina {
 			RegCommand("erase", pcmd_del);
 			RegCommand("Push", pcmd_push);
 			RegCommand("Modify", pcmd_modify);
+			RegCommand("ModTag",pcmd_modtag);
+			RegCommand("ModifyTag",pcmd_modtag);
+			RegCommand("AddPrefix",pcmd_addprefix);
+			RegCommand("NewPrefix",pcmd_addprefix);
+			RegCommand("ModPrefix",pcmd_modprefix);
+			RegCommand("ModifyPrefix",pcmd_modprefix);
+			RegCommand("ModPrj",pcmd_modprj);
 		}
 #pragma endregion
 }

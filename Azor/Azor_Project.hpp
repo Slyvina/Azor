@@ -5,7 +5,7 @@
 // 
 // 
 // 
-// 	(c) Jeroen P. Broks, 2024
+// 	(c) Jeroen P. Broks, 2024, 2025
 // 
 // 		This program is free software: you can redistribute it and/or modify
 // 		it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.31
+// Version: 25.03.08
 // End License
 
 #pragma once
@@ -34,7 +34,7 @@
 
 namespace Slyvina {
 	namespace Azor {
-		class _Azor_Project; typedef std::shared_ptr<_Azor_Project> Azor_Project; 
+		class _Azor_Project; typedef std::shared_ptr<_Azor_Project> Azor_Project;
 		class _Azor_Entry; typedef std::shared_ptr<_Azor_Entry> Azor_Entry;
 		struct Azor_CDPrefix { std::string Prefix{ "" }; uint32 Reset{ 0 }, CD{ 0 }; };
 
@@ -110,8 +110,19 @@ namespace Slyvina {
 			void Unlink(int victim);
 			bool HasMacro(String Macro, String Platform = "Always");
 			std::vector<String> Macro(String _Macro, String _Platform = "Always");
+			inline String Ask(String Cat,String Key, String Question, String Default="") { return Units::Ask(RawConfig,Cat,Key,Question,Default); }
+			inline String ReAsk(String Cat,String Key, String Question) {
+				auto OldV=RawConfig->Value(Cat,Key);
+				RawConfig->Kill(Cat,Key);
+				return Ask(Cat,Key,Question,OldV);
+			}
+			inline void ReloadRaw() {
+				QCol->Doing("Reloading",ProjectFileName());
+				RawConfig = Units::LoadGINIE(ProjectFileName(),ProjectFileName(),"Azor project!\nNote hard code modification done!");
+			}
+			bool HasPrefix(String Pref);
+			void AddPrefix(String Prefix);
 
-			
 		};
 
 		class _Azor_Entry {

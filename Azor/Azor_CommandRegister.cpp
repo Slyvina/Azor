@@ -5,7 +5,7 @@
 // 
 // 
 // 
-// 	(c) Jeroen P. Broks, 2024
+// 	(c) Jeroen P. Broks, 2024, 2025
 // 
 // 		This program is free software: you can redistribute it and/or modify
 // 		it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 // 	Please note that some references to data like pictures or audio, do not automatically
 // 	fall under this licenses. Mostly this is noted in the respective files.
 // 
-// Version: 24.10.31
+// Version: 25.03.08
 // End License
 #include <Slyvina.hpp>
 
@@ -42,6 +42,7 @@ namespace Slyvina {
 	namespace Azor {
 		static std::map<String, Azor_Command> _Reg{};
 
+		//{ Base commands
 #pragma region "Base Commands"
 		static void cmd_cls(std::vector<String>) { cls(); }
 		static void cmd_fuck(std::vector<String>) { QCol->LMagenta("What kind of talk is that?\n"); }
@@ -89,7 +90,7 @@ namespace Slyvina {
 			system(Cmd.c_str());
 		}
 		void cmd_pwd(carg c) { QCol->Reset(); std::cout << CurrentDir() << "\n"; }
-		void cmd_doing(carg c) { 
+		void cmd_doing(carg c) {
 			if (c.size() < 2) { QCol->Error("Doing got invalid input!"); return; }
 			QCol->Doing(c[0], c[1], c.size() > 2 ? c[2] : "\n");
 		}
@@ -98,6 +99,7 @@ namespace Slyvina {
 			ChangeDir(c[0]);
 		}
 #pragma endregion
+//}
 
 
 		void RegCommand(std::string CS, Azor_Command AC) {
@@ -178,7 +180,7 @@ namespace Slyvina {
 					for (size_t li = 0; li < Para.size(); li++) {
 
 						Para[li] = StReplace(Para[li], TrSPrintF("$%d", ai), (*args)[ai]);
-						
+
 					}
 				}
 				for (size_t li = 0; li < Para.size(); li++) Para[li] = StReplace(Para[li], "$bs", "\\");
@@ -191,8 +193,8 @@ namespace Slyvina {
 				}
 				else if (cmd == "BYE") { QCol->Error(TrSPrintF("Macro line #%d: BYE not allowed in Macro!", ln + 1)); }
 				else if (cmd == "" || Prefixed(cmd, "#")) {} // do nothing on whitelines or comments
-				else { 
-					Execute(cmd, Para); 
+				else {
+					Execute(cmd, Para);
 				}
 			}
 		}
@@ -203,7 +205,7 @@ namespace Slyvina {
 			cmd = StReplace(cmd, "$qt", "\\");
 			for (size_t i = 0; i < args.size(); i++) args[i] = StReplace(args[i], "$qt", "\\");
 			if (!cmd.size()) return;
-			if (!_Reg.count(cmd)) { 
+			if (!_Reg.count(cmd)) {
 				if(_Azor_Project::Current()) {
 					auto C{ _Azor_Project::Current() };
 					if (C->HasMacro(cmd)) {
@@ -217,11 +219,11 @@ namespace Slyvina {
 					if (HasMacro(cmd)) { ExecuteMacro(*Macro(cmd), &args); return; }
 					if (HasMacro(cmd,Platform())) { ExecuteMacro(*Macro(cmd,Platform()), &args); return; }
 				}
-				QCol->Error("Command " + cmd + " not understood!"); return; 
+				QCol->Error("Command " + cmd + " not understood!"); return;
 			};
 			if (!_Reg[cmd]) { QCol->Error("Command " + cmd + " is a null pointer! This is a bug in Azor! Please report!"); return; }
 			_Reg[cmd](args);
 		}
-		
+
 	}
 }
